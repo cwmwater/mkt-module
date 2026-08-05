@@ -33,3 +33,9 @@ class TitleInput(BaseModel):
     class Config:
         validate_by_name = True  # v2 대응
         # alias 사용 가능, 내부에서는 generated_content 로 접근 가능
+
+class EmbedInput(BaseModel):
+    text: str = Field(..., alias="text")
+
+    class Config:
+        allow_population_by_field_name = True

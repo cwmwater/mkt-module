@@ -1,11 +1,12 @@
 from fastapi import APIRouter, HTTPException, status, Form ,Body
-from app.schemas.data_schema import ContentKeywordsInput, ContentInput, TitleKeywordsInput, TitleInput
+from app.schemas.data_schema import ContentKeywordsInput, ContentInput, TitleKeywordsInput, TitleInput, EmbedInput
 from app.schemas.resp_schema import succeed, fail
 from app.utils.content_kw_generator import generate_content_kw
 from app.utils.content_generator import generate_content
 from app.utils.titles_kw_generator import generate_titles_kw
 from app.utils.titles_generator import generate_titles
 from app.utils.kw_trend_analyzer import analyze_keywords
+from app.services.embedding_service import get_embedding
 
 router = APIRouter(prefix = "/gpt", tags = ["MKT-Module"])
 
@@ -60,3 +61,12 @@ async def generate_titles_ep(
 
     resp = generate_titles(new_data)  # 기존 generate_titles 함수 호출
     return succeed(resp).model_dump()
+
+# 텍스트 임베딩 (RAG 검색용 벡터 생성)
+@router.post("/embed")
+async def embed_text_ep(data: EmbedInput = Body(...)):
+    try:
+        embedding = get_embedding(data.text)
+        return succeed({"embedding": embedding}).model_dump()
+    except Exception as e:
+        return fail("OPENAI_EMBEDDING_ERROR", "임베딩 생성 실패", {"reason": str(e)}).model_dump()

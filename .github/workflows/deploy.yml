@@ -1,0 +1,42 @@
+name: Build and Deploy fastapi-module
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # GITHUB_TOKEN은 워크플로우 실행마다 GitHub가 자동으로 만들어주는 임시 토큰.
+      # 위 permissions에 packages: write를 줬기 때문에 이 토큰으로 GHCR에 push 가능.
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/cwmwater/marketten-module:latest
+
+      # VPS에 SSH로 접속해서, 방금 push한 새 이미지를 받아 해당 컨테이너만 재시작
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            docker compose -f docker-compose.prod.yml pull module
+            docker compose -f docker-compose.prod.yml up -d module

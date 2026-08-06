@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     CLIENT_ID: str
     CLIENT_SECRET: str
 
+    #백엔드 -> fastapi-module 관리자 API 호출 검증용 (Spring의 fastapi.server.api-key와 동일 값)
+    FASTAPI_API_KEY: str = "TEMP_FASTAPI_API_KEY"
+
     model_config = SettingsConfigDict(
         env_file = str(BASE_DIR / ".env"),
         env_file_encoding="utf-8"

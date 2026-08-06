@@ -44,3 +44,9 @@ class EmbedInput(BaseModel):
 
     class Config:
         allow_population_by_field_name = True
+
+class ModelConfigInput(BaseModel):
+    model_name: str = Field(..., alias="model_name")
+
+    class Config:
+        allow_population_by_field_name = True

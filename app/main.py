@@ -1,7 +1,7 @@
 from app.config.settings import settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routers import gpt_router
+from app.routers import gpt_router, config_router
 
 app = FastAPI(
     title = settings.APP_NAME,
@@ -19,5 +19,6 @@ app.add_middleware(
 )
 
 app.include_router(gpt_router.router)
+app.include_router(config_router.router)
 
 #uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload

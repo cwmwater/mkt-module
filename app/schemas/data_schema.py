@@ -9,12 +9,17 @@ class ContentKeywordsInput(BaseModel):
     class Config:
         allow_population_by_field_name = True  # 내부에서 field_name으로도 접근 가능
 
+class ToneExample(BaseModel):
+    text: str
+    embedding: List[float]
+
 class ContentInput(BaseModel):
     product_info: str = Field(..., alias="productInfo")
     product_features: str = Field(..., alias="productFeatures")
     user_experience: str = Field(..., alias="userExperience")
     selected_tone: str = Field(..., alias="selectedTone")
-    tone_preview: str = Field(..., alias="tonePreview")
+    tone_preview: str = Field(..., alias="tonePreview")  # 예문이 하나도 없을 때의 폴백
+    tone_examples: List[ToneExample] = Field(default_factory=list, alias="toneExamples")  # RAG 검색 대상
     keywords: str = Field(..., alias="keywords")
 
     class Config:

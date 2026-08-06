@@ -1,5 +1,23 @@
 from app.schemas.data_schema import ContentInput
 from app.services.gpt_service import request_prompt as rp
+from app.services.embedding_service import get_embedding
+from app.utils.similarity import top_k_similar
+
+TOP_K_TONE_EXAMPLES = 3
+
+# 등록된 톤 예문 중 요청 컨텍스트와 가장 비슷한 것들을 검색해 few-shot 블록으로 구성 (RAG)
+def build_tone_example_block(data: ContentInput) -> str:
+    if not data.tone_examples:
+        return data.tone_preview  # 예문이 하나도 없으면 기존 방식대로 폴백
+
+    keywords_text = ", ".join(data.keywords) if isinstance(data.keywords, list) else data.keywords
+    query_text = f"{data.product_info} {data.product_features} {keywords_text}"
+    query_embedding = get_embedding(query_text)
+
+    candidates = [{"text": e.text, "embedding": e.embedding} for e in data.tone_examples]
+    top_examples = top_k_similar(query_embedding, candidates, k=min(TOP_K_TONE_EXAMPLES, len(candidates)))
+
+    return "\n".join(f"- {ex['text']}" for ex in top_examples)
 
 #본문 생성 프롬프트 요청
 async def generate_content(data: ContentInput):
@@ -55,6 +73,8 @@ async def generate_content(data: ContentInput):
 
     topics_response = rp(msg = topics_messages, func = topics_func)
 
+    tone_example_block = build_tone_example_block(data)
+
     content_uprompt = f"""
     <<상품명>>
     {data.product_info}
@@ -67,7 +87,7 @@ async def generate_content(data: ContentInput):
     <<톤>>
     {data.selected_tone}
     예문)
-    {data.tone_preview}
+    {tone_example_block}
     ---
     [Context]
     위 설명에 있는 상품을 마케팅하는 블로그 글을 작성하려고 해. 글의 내용이 마케팅이라는 목적이 명확하게 보이는 내용보다는 독자들의 흥미를 자연스럽게 유도할 수 있는 내용이었으면 좋겠어.

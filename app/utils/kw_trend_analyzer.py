@@ -10,7 +10,7 @@ def analyze_keywords(keywords: list) -> dict:
         start_date = end_date - timedelta(days=90)
         timeframe = f"{start_date.strftime('%Y-%m-%d')} {end_date.strftime('%Y-%m-%d')}"
 
-        tr = Trends()
+        tr = Trends(request_delay=2.0)  # 클라우드 IP(VPS)에서 구글 rate limit(429)을 자주 만나서 요청 간 지연 추가
         df = tr.interest_over_time(keywords, geo="KR", timeframe=timeframe)
 
         if df is None or df.empty:

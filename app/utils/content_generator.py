@@ -1,17 +1,14 @@
-import logging
 from app.schemas.data_schema import ContentInput
 from app.services.gpt_service import request_prompt as rp
 from app.services.embedding_service import get_embedding
 from app.utils.similarity import top_k_similar
-
-log = logging.getLogger(__name__)
 
 TOP_K_TONE_EXAMPLES = 3
 
 # 등록된 톤 예문 중 요청 컨텍스트와 가장 비슷한 것들을 검색해 few-shot 블록으로 구성 (RAG)
 def build_tone_example_block(data: ContentInput) -> str:
     if not data.tone_examples:
-        log.info("[RAG] 등록된 예문 없음 -> tone_preview로 폴백")
+        print("[RAG] 등록된 예문 없음 -> tone_preview로 폴백", flush=True)
         return data.tone_preview  # 예문이 하나도 없으면 기존 방식대로 폴백
 
     keywords_text = ", ".join(data.keywords) if isinstance(data.keywords, list) else data.keywords
@@ -21,10 +18,10 @@ def build_tone_example_block(data: ContentInput) -> str:
     candidates = [{"text": e.text, "embedding": e.embedding} for e in data.tone_examples]
     scored = top_k_similar(query_embedding, candidates, k=len(candidates))  # 전체를 점수순으로 봄(데모/로그용)
 
-    log.info("[RAG] 쿼리: %s", query_text)
+    print(f"[RAG] 쿼리: {query_text}", flush=True)
     for rank, ex in enumerate(scored, start=1):
         picked = "선택" if rank <= TOP_K_TONE_EXAMPLES else "탈락"
-        log.info("[RAG] %d위 (%s) 유사도=%.4f | %s", rank, picked, ex["similarity"], ex["text"])
+        print(f"[RAG] {rank}위 ({picked}) 유사도={ex['similarity']:.4f} | {ex['text']}", flush=True)
 
     top_examples = scored[:TOP_K_TONE_EXAMPLES]
     return "\n".join(f"- {ex['text']}" for ex in top_examples)

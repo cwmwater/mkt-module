@@ -17,9 +17,11 @@ async def analyze_content_keywords_ep(input: ContentKeywordsInput = Body(...)):
     kw = generate_content_kw(input)
     try:
         resp = analyze_keywords(kw["keywords"])
-        return succeed(resp).model_dump()
     except Exception as e:
-        return fail("NAVER_DATALAB_API_ERROR", "키워드 트렌드 분석 실패", {"reason": str(e)}).model_dump()
+        # 트렌드 조회는 실패해도 GPT가 이미 만든 키워드는 그대로 반환 (검색량만 비워둠)
+        print(f"[trend] 키워드 트렌드 조회 실패, 키워드만 반환: {e}", flush=True)
+        resp = {k: {"평균 수치": None, "최대 수치": None} for k in kw["keywords"]}
+    return succeed(resp).model_dump()
 
 #본문 생성 (input: 상품명, 상품 특징, 사용자 경험, 어투, 어투 예문, 선택 키워드)
 @router.post("/content")
@@ -41,9 +43,11 @@ async def analyze_title_keywords_ep(
     kw = generate_titles_kw(data)
     try:
         resp = analyze_keywords(kw["keywords"])
-        return succeed(resp).model_dump()
     except Exception as e:
-        return fail("NAVER_DATALAB_API_ERROR", "키워드 트렌드 분석 실패", {"reason": str(e)}).model_dump()
+        # 트렌드 조회는 실패해도 GPT가 이미 만든 키워드는 그대로 반환 (검색량만 비워둠)
+        print(f"[trend] 키워드 트렌드 조회 실패, 키워드만 반환: {e}", flush=True)
+        resp = {k: {"평균 수치": None, "최대 수치": None} for k in kw["keywords"]}
+    return succeed(resp).model_dump()
 
 #제목 리스트 생성 (input: 본문, 선택 키워드)
 @router.post("/titles")
